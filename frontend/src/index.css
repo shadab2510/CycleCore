@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.status-badge {
+  @apply px-2 py-1 text-xs font-semibold rounded-full;
+}
+
+.status-design {
+  @apply bg-gray-100 text-gray-800;
+}
+
+.status-validation {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.status-approval {
+  @apply bg-orange-100 text-orange-800;
+}
+
+.status-completed {
+  @apply bg-green-100 text-green-800;
+}
+
+.sidebar-item {
+  @apply flex items-center px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-100;
+}
+
+.sidebar-item.active {
+  @apply bg-blue-50 text-blue-700;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+}
+
+.btn {
+  @apply px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+.btn-warning {
+  @apply bg-orange-600 text-white hover:bg-orange-700 focus:ring-orange-500;
+}
+
+.btn-info {
+  @apply bg-cyan-600 text-white hover:bg-cyan-700 focus:ring-cyan-500;
+}

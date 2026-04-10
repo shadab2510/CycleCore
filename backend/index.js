@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const express = require('express')
 const cors = require('cors')
 const { v4: uuidv4 } = require('uuid')
@@ -81,6 +83,10 @@ app.use(cors({
   credentials: true
 }))
 app.use(express.json())
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' })
+})
 
 // MongoDB Schemas
 const UserSchema = new mongoose.Schema({
