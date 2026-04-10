@@ -72,13 +72,25 @@ async function createDefaultUsers() {
 }
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()).filter(Boolean)
   : ['http://localhost:4000', 'http://localhost:3000']
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true
+  if (allowedOrigins.includes('*')) return true
+  if (allowedOrigins.includes(origin)) return true
+
+  // Support wildcard patterns like *.vercel.app
+  return allowedOrigins.some((pattern) => {
+    if (!pattern.startsWith('*.')) return false
+    return origin.endsWith(pattern.slice(1))
+  })
+}
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
-    callback(new Error('Not allowed by CORS'))
+    if (isAllowedOrigin(origin)) return callback(null, true)
+    callback(new Error(`Not allowed by CORS: ${origin}`))
   },
   credentials: true
 }))
