@@ -1,0 +1,955 @@
+{
+	"info": {
+		"_postman_id": "b77ad0a6-cf6d-47f3-a3da-50f7f3548fe2",
+		"name": "CycleCoreLIMS Full API Collection",
+		"description": "Complete API collection for current backend routes in server/index.js. Includes GET/POST/PATCH endpoints. Note: there are no PUT routes currently implemented in backend.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"pm.collectionVariables.set('token_admin', data.token);",
+									"pm.collectionVariables.set('token', data.token);"
+								]
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Login Manager",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"manager\",\n  \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"pm.collectionVariables.set('token_manager', data.token);"
+								]
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Login Lab Technician",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"labtech\",\n  \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"pm.collectionVariables.set('token_labtech', data.token);"
+								]
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Get My User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register User (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_admin}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"qa_user\",\n  \"email\": \"qa_user@cyclecorelims.com\",\n  \"password\": \"password\",\n  \"role\": \"lab_technician\",\n  \"firstName\": \"QA\",\n  \"lastName\": \"User\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get Users (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_admin}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create User (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_admin}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"api_created_user\",\n  \"email\": \"api_created_user@cyclecorelims.com\",\n  \"password\": \"password\",\n  \"role\": \"manager\",\n  \"firstName\": \"API\",\n  \"lastName\": \"Manager\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Samples",
+			"item": [
+				{
+					"name": "Get All Samples",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/samples",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"samples"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Sample By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/samples/{{sampleId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"samples",
+								"{{sampleId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Sample",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_labtech}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"API Sample\",\n  \"type\": \"Blood\",\n  \"source\": \"Patient API-001\",\n  \"collectionDate\": \"2026-04-09\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/samples",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"samples"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Sample Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_manager}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"Validation\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/samples/{{sampleId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"samples",
+								"{{sampleId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tests",
+			"item": [
+				{
+					"name": "Get Tests (optional sampleId)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/tests?sampleId={{sampleId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tests"
+							],
+							"query": [
+								{
+									"key": "sampleId",
+									"value": "{{sampleId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Test",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_labtech}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sampleId\": \"{{sampleId}}\",\n  \"name\": \"API Chemistry Panel\",\n  \"type\": \"Chemistry\",\n  \"method\": \"Autoanalyzer\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tests",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tests"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Results",
+			"item": [
+				{
+					"name": "Get Results (optional testId)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/results?testId={{testId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"results"
+							],
+							"query": [
+								{
+									"key": "testId",
+									"value": "{{testId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Result",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_labtech}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"testId\": \"{{testId}}\",\n  \"value\": \"4.8\",\n  \"unit\": \"mg/dL\",\n  \"status\": \"Pass\",\n  \"complianceFlag\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/results",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"results"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/dashboard/stats",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"dashboard",
+								"stats"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Complaints",
+			"item": [
+				{
+					"name": "Get All Complaints",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/complaints",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"if (Array.isArray(data) && data.length > 0 && data[0].id) {",
+									"  pm.collectionVariables.set('complaintId', data[0].id);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Get Complaint By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Complaint (LabTech)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_labtech}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Postman Complaint\",\n  \"description\": \"Created from Postman for role-based workflow actions.\",\n  \"source\": \"Hospital\",\n  \"complaintType\": \"Product Complaint\",\n  \"severity\": \"High\",\n  \"occurrence\": 4,\n  \"detectability\": 3,\n  \"ownerId\": \"manager\",\n  \"investigatorId\": \"labtech\",\n  \"approverId\": \"manager\",\n  \"linkedCapaId\": \"CAPA-POSTMAN-001\",\n  \"capaStatus\": \"Open\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints"
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const data = pm.response.json();",
+									"if (data && data.id) {",
+									"  pm.collectionVariables.set('complaintId', data.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "Update Complaint (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_manager}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"capaStatus\": \"Closed\",\n  \"approvalComments\": \"Updated from Postman.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transition: Create -> Investigate (LabTech)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_labtech}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nextStatus\": \"Investigate\",\n  \"stageData\": {\n    \"investigationSummary\": \"Investigation in progress.\",\n    \"rootCause\": \"Potential supplier labeling issue.\"\n  },\n  \"comment\": \"Started investigation from API.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}/transition",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}",
+								"transition"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transition: Investigate -> Action Plan (LabTech)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_labtech}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nextStatus\": \"Action Plan\",\n  \"stageData\": {\n    \"actionPlan\": \"Contain lot and update incoming QC checklists.\"\n  },\n  \"comment\": \"Action plan prepared.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}/transition",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}",
+								"transition"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transition: Action Plan -> Approval (Manager)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_manager}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nextStatus\": \"Approval\",\n  \"stageData\": {\n    \"approvalComments\": \"Ready for management approval.\"\n  },\n  \"comment\": \"Moved to approval queue.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}/transition",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}",
+								"transition"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transition: Approval -> Execution (Manager)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_manager}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nextStatus\": \"Execution\",\n  \"stageData\": {\n    \"approvalComments\": \"Approved for execution.\"\n  },\n  \"comment\": \"Approval granted.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}/transition",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}",
+								"transition"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transition: Execution -> Verification (LabTech)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_labtech}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nextStatus\": \"Verification\",\n  \"stageData\": {\n    \"executionSummary\": \"Containment executed and process updated.\",\n    \"verificationSummary\": \"No recurrence in monitored lots.\",\n    \"effectivenessCheckResult\": \"Pass\"\n  },\n  \"comment\": \"Execution completed and verified.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}/transition",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}",
+								"transition"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transition: Verification -> Close (Manager)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_manager}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nextStatus\": \"Close\",\n  \"stageData\": {\n    \"closureComments\": \"Closed after CAPA closure and effectiveness pass.\"\n  },\n  \"comment\": \"Final close action by manager.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}/transition",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}",
+								"transition"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Action: Reject (Approval -> Action Plan)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_manager}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"reject\",\n  \"stageData\": {\n    \"approvalComments\": \"Rejected: update action plan with stronger controls.\"\n  },\n  \"comment\": \"Sent back for rework.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}/transition",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}",
+								"transition"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Action: Reopen (Verification/Close -> Action Plan)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_manager}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"reopen\",\n  \"comment\": \"Reopened after verification concern.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/complaints/{{complaintId}}/transition",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"{{complaintId}}",
+								"transition"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Seed Demo Complaints (Admin/Manager)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token_manager}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/complaints/demo-seed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"complaints",
+								"demo-seed"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3001/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "token_admin",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "token_manager",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "token_labtech",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sampleId",
+			"value": "SMP-ABC123-DEF",
+			"type": "string"
+		},
+		{
+			"key": "testId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "complaintId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
