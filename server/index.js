@@ -6,11 +6,12 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
 const app = express()
-const PORT = 3001
-const JWT_SECRET = 'cyclecorelims-secret-key-2024'
+const PORT = process.env.PORT || 3001
+const JWT_SECRET = process.env.JWT_SECRET || 'cyclecorelims-secret-key-2024'
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cyclecorelims'
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost:27017/cyclecorelims', {
+mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(async () => {
@@ -68,7 +69,17 @@ async function createDefaultUsers() {
   }
 }
 
-app.use(cors())
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:4000', 'http://localhost:3000']
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
+    callback(new Error('Not allowed by CORS'))
+  },
+  credentials: true
+}))
 app.use(express.json())
 
 // MongoDB Schemas
