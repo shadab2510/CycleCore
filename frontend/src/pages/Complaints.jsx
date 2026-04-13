@@ -53,10 +53,12 @@ const Complaints = () => {
   const dispatch = useDispatch()
   const { items: complaints, loading, error } = useSelector(state => state.complaints)
   const { user } = useSelector(state => state.auth)
+  const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedComplaintId, setSelectedComplaintId] = useState('')
   const [localMessage, setLocalMessage] = useState('')
+  const [previewAttachment, setPreviewAttachment] = useState(null)
   const [createForm, setCreateForm] = useState({
     title: '',
     description: '',
@@ -78,6 +80,7 @@ const Complaints = () => {
     approverId: '',
     linkedCapaId: '',
     capaStatus: 'Not Linked',
+    attachments: []
   })
   const [stageForm, setStageForm] = useState(DEFAULT_STAGE_FORM)
   const [ownershipForm, setOwnershipForm] = useState(DEFAULT_OWNERSHIP_FORM)
@@ -181,38 +184,73 @@ const Complaints = () => {
     return new Date(slaDueAt).getTime() < Date.now() ? 'text-red-600 font-semibold' : 'text-gray-600'
   }
 
+  const isInlinePreviewable = (mimetype = '', fileName = '') => {
+    const lowerName = fileName.toLowerCase()
+    return (
+      mimetype.includes('pdf') ||
+      mimetype.startsWith('image/') ||
+      mimetype.startsWith('text/') ||
+      lowerName.endsWith('.pdf') ||
+      lowerName.endsWith('.png') ||
+      lowerName.endsWith('.jpg') ||
+      lowerName.endsWith('.jpeg') ||
+      lowerName.endsWith('.gif') ||
+      lowerName.endsWith('.txt')
+    )
+  }
+
   const handleCreate = async (e) => {
     e.preventDefault()
     setLocalMessage('')
 
-    const result = await dispatch(createComplaint(createForm))
-    if (!result.error) {
-      setCreateForm({
-        title: '',
-        description: '',
-        sampleId: '',
-        source: 'Other',
-        complaintType: 'Product Complaint',
-        productFamily: '',
-        productCode: '',
-        lotNumber: '',
-        batchNumber: '',
-        serialNumber: '',
-        country: '',
-        dateOfAwareness: new Date().toISOString().slice(0, 10),
-        severity: 'Medium',
-        occurrence: 3,
-        detectability: 3,
-        ownerId: '',
-        investigatorId: '',
-        approverId: '',
-        linkedCapaId: '',
-        capaStatus: 'Not Linked',
-      })
-      setShowCreateForm(false)
-      setSelectedComplaintId(getComplaintIdentifier(result.payload))
-      setLocalMessage('Complaint created with auto risk scoring and SLA due date.')
+    const formData = new FormData()
+
+    // Add all form fields
+    Object.keys(createForm).forEach(key => {
+      if (key === 'attachments') {
+        createForm.attachments.forEach((file) => {
+          formData.append('attachments', file)
+        })
+      } else {
+        formData.append(key, createForm[key])
+      }
+    })
+
+    const result = await dispatch(createComplaint(formData))
+
+    if (result.error) {
+      setLocalMessage(result.error.message || 'Failed to create complaint')
+      return
     }
+
+    const createdComplaint = result.payload
+
+    setCreateForm({
+      title: '',
+      description: '',
+      sampleId: '',
+      source: 'Other',
+      complaintType: 'Product Complaint',
+      productFamily: '',
+      productCode: '',
+      lotNumber: '',
+      batchNumber: '',
+      serialNumber: '',
+      country: '',
+      dateOfAwareness: new Date().toISOString().slice(0, 10),
+      severity: 'Medium',
+      occurrence: 3,
+      detectability: 3,
+      ownerId: '',
+      investigatorId: '',
+      approverId: '',
+      linkedCapaId: '',
+      capaStatus: 'Not Linked',
+      attachments: []
+    })
+    setShowCreateForm(false)
+    setSelectedComplaintId(getComplaintIdentifier(createdComplaint))
+    setLocalMessage('Complaint created with auto risk scoring and SLA due date.')
   }
 
   const handleSaveOwnership = async () => {
@@ -494,6 +532,30 @@ const Complaints = () => {
                 required
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Attachments (PDF, DOC, DOCX, TXT, Images)</label>
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files)
+                  setCreateForm((prev) => ({ ...prev, attachments: files }))
+                }}
+              />
+              <p className="text-xs text-gray-500 mt-1">Maximum 5 files, 10MB each. Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG, GIF</p>
+              {createForm.attachments.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-700">Selected files:</p>
+                  <ul className="text-xs text-gray-600">
+                    {createForm.attachments.map((file, index) => (
+                      <li key={index}>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
@@ -595,6 +657,35 @@ const Complaints = () => {
               </div>
 
               <p className="text-sm text-gray-700">{selectedComplaint.description}</p>
+
+              {selectedComplaint.attachments && selectedComplaint.attachments.length > 0 && (
+                <div className="border border-gray-200 rounded-md p-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">Attachments</h4>
+                  <div className="space-y-2">
+                    {selectedComplaint.attachments.map((attachment, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewAttachment(attachment)}
+                              className="text-blue-600 hover:text-blue-800 font-medium text-left"
+                            >
+                              {attachment.originalName}
+                            </button>
+                            <p className="text-xs text-gray-500">
+                              {(attachment.size / 1024 / 1024).toFixed(2)} MB • {attachment.mimetype}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                 <div className="border border-gray-200 rounded-md p-3">
@@ -862,6 +953,49 @@ const Complaints = () => {
           )}
         </div>
       </div>
+
+      {previewAttachment && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+              <h4 className="font-semibold text-gray-900 truncate pr-4">{previewAttachment.originalName}</h4>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`${apiBaseUrl}${previewAttachment.url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                >
+                  Download
+                </a>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setPreviewAttachment(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 bg-gray-50">
+              {isInlinePreviewable(previewAttachment.mimetype, previewAttachment.originalName) ? (
+                <iframe
+                  title={previewAttachment.originalName}
+                  src={`${apiBaseUrl}${previewAttachment.url}`}
+                  className="w-full h-full border-0"
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center px-6 text-center">
+                  <p className="text-gray-700">
+                    Preview is not available for this file type. Use Download to open the document.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -16,6 +16,7 @@ import MedTechTesting from './pages/MedTechTesting'
 import AnalyticsDashboardSimple from './pages/AnalyticsDashboardSimple'
 import UserManagement from './pages/UserManagement'
 import Complaints from './pages/Complaints'
+import ComplaintsAnalytics from './pages/ComplaintsAnalytics'
 
 function App() {
   const dispatch = useDispatch()
@@ -97,6 +98,11 @@ function App() {
         <Route path="/complaints" element={
           <ProtectedRoute requiredRoles={['admin', 'lab_technician', 'manager']}>
             <Complaints />
+          </ProtectedRoute>
+        } />
+        <Route path="/complaints-analytics" element={
+          <ProtectedRoute requiredRoles={['admin', 'manager']}>
+            <ComplaintsAnalytics />
           </ProtectedRoute>
         } />
       </Routes>

@@ -31,8 +31,8 @@ const Layout = ({ children }) => {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <aside className={`${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white shadow-sm border-r border-gray-200 transition-all duration-300 ease-in-out`}>
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
+      <aside className={`${sidebarCollapsed ? 'w-20' : 'w-64'} h-screen bg-white shadow-sm border-r border-gray-200 transition-all duration-300 ease-in-out flex flex-col`}>
         {/* Header with Logo */}
         <div className="p-4">
           <div className="flex flex-col items-center">
@@ -92,7 +92,7 @@ const Layout = ({ children }) => {
         </div>
         
         {/* Navigation */}
-        <nav className={`${sidebarCollapsed ? 'px-2' : 'px-4'} mt-4`}>
+        <nav className={`${sidebarCollapsed ? 'px-2' : 'px-4'} mt-4 pb-4 overflow-y-auto`}>
           <Link to="/dashboard" className={`sidebar-item ${getActiveClass('/dashboard')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
             <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -131,6 +131,15 @@ const Layout = ({ children }) => {
               {!sidebarCollapsed && <span>Complaints</span>}
             </Link>
           )}
+
+          {(user?.role === 'admin' || user?.role === 'manager') && (
+            <Link to="/complaints-analytics" className={`sidebar-item ${getActiveClass('/complaints-analytics')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
+              <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              {!sidebarCollapsed && <span>Complaints Analytics</span>}
+            </Link>
+          )}
           
           {(user?.role === 'admin' || user?.role === 'manager') && (
             <Link to="/users" className={`sidebar-item ${getActiveClass('/users')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
@@ -158,8 +167,8 @@ const Layout = ({ children }) => {
 
       </aside>
 
-      <main className="flex-1">
-        <header className="bg-white shadow-sm border-b border-gray-200">
+      <main className="flex-1 h-screen flex flex-col overflow-hidden">
+        <header className="bg-white shadow-sm border-b border-gray-200 shrink-0">
           <div className="px-6 py-4 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">
               {location.pathname === '/' && 'Dashboard'}
@@ -172,6 +181,7 @@ const Layout = ({ children }) => {
               {location.pathname === '/tests' && 'Test Management'}
               {location.pathname === '/results' && 'Result Management'}
               {location.pathname === '/complaints' && 'Complaint Investigation Workflow'}
+              {location.pathname === '/complaints-analytics' && 'Complaints Analytics'}
             </h2>
             <div className="flex items-center space-x-4">
               <div className="relative" ref={userMenuRef}>
@@ -233,7 +243,7 @@ const Layout = ({ children }) => {
           </div>
         </header>
         
-        <div className="p-6">
+        <div className="p-6 flex-1 overflow-y-auto">
           {children}
         </div>
       </main>

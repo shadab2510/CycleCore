@@ -6,6 +6,8 @@ const { v4: uuidv4 } = require('uuid')
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const multer = require('multer')
+const path = require('path')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -96,6 +98,39 @@ app.use(cors({
 }))
 app.use(express.json())
 
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/')
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname))
+  }
+})
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Allow PDFs and common document types
+    const allowedTypes = /pdf|doc|docx|txt|jpg|jpeg|png|gif/
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase())
+    const mimetype = allowedTypes.test(file.mimetype)
+
+    if (mimetype && extname) {
+      return cb(null, true)
+    } else {
+      cb(new Error('Invalid file type. Only PDF, DOC, DOCX, TXT, JPG, PNG, GIF files are allowed.'))
+    }
+  }
+})
+
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'))
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' })
 })
@@ -185,6 +220,14 @@ const ComplaintSchema = new mongoose.Schema({
   executionSummary: { type: String, default: '' },
   verificationSummary: { type: String, default: '' },
   closureComments: { type: String, default: '' },
+  attachments: [{
+    filename: { type: String, required: true },
+    originalName: { type: String, required: true },
+    mimetype: { type: String, required: true },
+    size: { type: Number, required: true },
+    url: { type: String, required: true },
+    uploadedAt: { type: Date, default: Date.now }
+  }],
   history: {
     type: [{
       from: String,
@@ -301,6 +344,7 @@ let complaints = [
     executionSummary: '',
     verificationSummary: '',
     closureComments: '',
+    attachments: [],
     history: [
       {
         from: 'Create',
@@ -798,7 +842,7 @@ app.get('/api/complaints/:id', authenticateToken, async (req, res) => {
   }
 })
 
-app.post('/api/complaints', authenticateToken, requireRole(['admin', 'lab_technician', 'manager']), async (req, res) => {
+app.post('/api/complaints', authenticateToken, requireRole(['admin', 'lab_technician', 'manager']), upload.array('attachments', 5), async (req, res) => {
   try {
     const {
       title,
@@ -832,6 +876,21 @@ app.post('/api/complaints', authenticateToken, requireRole(['admin', 'lab_techni
     const calculatedRiskLevel = deriveRiskLevelFromScore(calculatedRiskScore)
     const slaDueAt = calculateSlaDueDate('Create', calculatedRiskLevel)
     const derivedFlags = deriveAutomationFlags({ source, rootCause: '' })
+
+    // Process uploaded files
+    const attachments = []
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        attachments.push({
+          filename: file.filename,
+          originalName: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+          url: `/uploads/${file.filename}`,
+          uploadedAt: new Date()
+        })
+      })
+    }
 
     const newComplaint = {
       id: generateComplaintId(),
@@ -872,6 +931,7 @@ app.post('/api/complaints', authenticateToken, requireRole(['admin', 'lab_techni
       executionSummary: '',
       verificationSummary: '',
       closureComments: '',
+      attachments,
       history: [],
       createdBy: req.user.id,
       createdAt,
