@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { logout } from '../store/authSlice'
+import { hasTabAccess, TAB_CONFIG } from '../utils/tabPermissions'
 
 const Layout = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -50,7 +51,7 @@ const Layout = ({ children }) => {
                 <div style={{display: 'none'}}>
                   <h1 className="text-lg font-bold text-gray-900">CycleCoreLIMS</h1>
                 </div>
-                <p className="text-xs text-gray-500 text-center">Laboratory Information Management</p>
+                <p className="text-xs text-gray-500 text-center">Laboratory Information and Complaint Management</p>
               </>
             ) : (
               <>
@@ -93,76 +94,22 @@ const Layout = ({ children }) => {
         
         {/* Navigation */}
         <nav className={`${sidebarCollapsed ? 'px-2' : 'px-4'} mt-4 pb-4 overflow-y-auto`}>
-          <Link to="/dashboard" className={`sidebar-item ${getActiveClass('/dashboard')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            {!sidebarCollapsed && <span>Dashboard</span>}
-          </Link>
-          
-          {(user?.role === 'admin' || user?.role === 'lab_technician' || user?.role === 'manager') && (
-            <Link to="/samples" className={`sidebar-item ${getActiveClass('/samples')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
-              <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              {!sidebarCollapsed && <span>Samples</span>}
-            </Link>
-          )}
-          
-          <Link to="/tests" className={`sidebar-item ${getActiveClass('/tests')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
-            {!sidebarCollapsed && <span>Tests</span>}
-          </Link>
-          
-          <Link to="/results" className={`sidebar-item ${getActiveClass('/results')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            {!sidebarCollapsed && <span>Results</span>}
-          </Link>
-
-          {(user?.role === 'admin' || user?.role === 'lab_technician' || user?.role === 'manager') && (
-            <Link to="/complaints" className={`sidebar-item ${getActiveClass('/complaints')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
-              <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m-7 5h8a2 2 0 002-2V7l-4-4H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              {!sidebarCollapsed && <span>Complaints</span>}
-            </Link>
-          )}
-
-          {(user?.role === 'admin' || user?.role === 'manager') && (
-            <Link to="/complaints-analytics" className={`sidebar-item ${getActiveClass('/complaints-analytics')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
-              <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              {!sidebarCollapsed && <span>Complaints Analytics</span>}
-            </Link>
-          )}
-          
-          {(user?.role === 'admin' || user?.role === 'manager') && (
-            <Link to="/users" className={`sidebar-item ${getActiveClass('/users')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
-              <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              {!sidebarCollapsed && <span>User Management</span>}
-            </Link>
-          )}
-          
-          <Link to="/clinical-trials" className={`sidebar-item ${getActiveClass('/clinical-trials')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            {!sidebarCollapsed && <span>Clinical Trials</span>}
-          </Link>
-          
-          <Link to="/clinical-sample" className={`sidebar-item ${getActiveClass('/clinical-sample')} ${sidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            {!sidebarCollapsed && <span>Clinical Sample</span>}
-          </Link>
+          {Object.entries(TAB_CONFIG).map(([tabKey, tab]) => {
+            if (!hasTabAccess(user, tabKey)) return null
+            
+            return (
+              <Link 
+                key={tabKey}
+                to={tab.path} 
+                className={`sidebar-item ${getActiveClass(tab.path)} ${sidebarCollapsed ? 'justify-center' : ''}`}
+              >
+                <svg className="w-5 h-5" style={{marginRight: sidebarCollapsed ? '0' : '12px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tab.icon} />
+                </svg>
+                {!sidebarCollapsed && <span>{tab.label}</span>}
+              </Link>
+            )
+          })}
         </nav>
 
       </aside>

@@ -605,6 +605,122 @@ app.post('/api/users', authenticateToken, requireRole(['admin']), async (req, re
   }
 })
 
+// User permission management endpoints
+app.get('/api/user-permissions', authenticateToken, requireRole(['admin']), async (req, res) => {
+  try {
+    // In a real implementation, this would be stored in database
+    // For now, we'll return the permissions from the frontend config
+    const fs = require('fs').promises
+    const path = require('path')
+    
+    try {
+      const configPath = path.join(__dirname, '../frontend/src/config/userPermissions.json')
+      const configData = await fs.readFile(configPath, 'utf8')
+      const config = JSON.parse(configData)
+      res.json(config)
+    } catch (error) {
+      // If file doesn't exist, return empty config
+      res.json({
+        description: "User-specific tab permissions configuration",
+        users: {},
+        instructions: {
+          how_to_use: [
+            "1. Add a new user entry in the 'users' object",
+            "2. Set 'allowedTabs' array with the tab keys they should access", 
+            "3. Available tab keys: dashboard, samples, tests, results, complaints, complaintsAnalytics, userManagement, clinicalTrials, clinicalSample"
+          ]
+        }
+      })
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user permissions' })
+  }
+})
+
+app.post('/api/user-permissions', authenticateToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const { username, allowedTabs, description } = req.body
+    
+    if (!username || !Array.isArray(allowedTabs)) {
+      return res.status(400).json({ error: 'Username and allowedTabs array are required' })
+    }
+    
+    const fs = require('fs').promises
+    const path = require('path')
+    
+    try {
+      const configPath = path.join(__dirname, '../frontend/src/config/userPermissions.json')
+      let config
+      
+      try {
+        const configData = await fs.readFile(configPath, 'utf8')
+        config = JSON.parse(configData)
+      } catch (error) {
+        config = {
+          description: "User-specific tab permissions configuration",
+          users: {},
+          instructions: {
+            how_to_use: [
+              "1. Add a new user entry in the 'users' object",
+              "2. Set 'allowedTabs' array with the tab keys they should access", 
+              "3. Available tab keys: dashboard, samples, tests, results, complaints, complaintsAnalytics, userManagement, clinicalTrials, clinicalSample"
+            ]
+          }
+        }
+      }
+      
+      config.users[username] = {
+        username,
+        allowedTabs,
+        description: description || `User with access to ${allowedTabs.join(', ')}`
+      }
+      
+      await fs.writeFile(configPath, JSON.stringify(config, null, 2))
+      res.json({ message: 'User permissions updated successfully', config })
+      
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to save permissions file' })
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update user permissions' })
+  }
+})
+
+app.delete('/api/user-permissions/:username', authenticateToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const { username } = req.params
+    
+    const fs = require('fs').promises
+    const path = require('path')
+    
+    try {
+      const configPath = path.join(__dirname, '../frontend/src/config/userPermissions.json')
+      let config
+      
+      try {
+        const configData = await fs.readFile(configPath, 'utf8')
+        config = JSON.parse(configData)
+      } catch (error) {
+        return res.status(404).json({ error: 'Permissions configuration not found' })
+      }
+      
+      if (!config.users[username]) {
+        return res.status(404).json({ error: 'User permissions not found' })
+      }
+      
+      delete config.users[username]
+      
+      await fs.writeFile(configPath, JSON.stringify(config, null, 2))
+      res.json({ message: 'User permissions removed successfully' })
+      
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update permissions file' })
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove user permissions' })
+  }
+})
+
 function generateSampleId() {
   const timestamp = Date.now().toString(36).toUpperCase()
   const random = Math.random().toString(36).substring(2, 5).toUpperCase()

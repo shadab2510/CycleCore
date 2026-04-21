@@ -96,12 +96,12 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/complaints" element={
-          <ProtectedRoute requiredRoles={['admin', 'lab_technician', 'manager']}>
+          <ProtectedRoute requiredRoles={['admin', 'lab_technician', 'manager']} requiredTab="complaints">
             <Complaints />
           </ProtectedRoute>
         } />
         <Route path="/complaints-analytics" element={
-          <ProtectedRoute requiredRoles={['admin', 'manager']}>
+          <ProtectedRoute requiredRoles={['admin', 'manager']} requiredTab="complaintsAnalytics">
             <ComplaintsAnalytics />
           </ProtectedRoute>
         } />

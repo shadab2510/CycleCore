@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import { AVAILABLE_TABS } from '../utils/tabPermissions'
 
 const UserManagement = () => {
   const [users, setUsers] = useState([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showPermissionForm, setShowPermissionForm] = useState(false)
+  const [userPermissions, setUserPermissions] = useState({ users: {} })
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [permissionFormData, setPermissionFormData] = useState({
+    username: '',
+    allowedTabs: [],
+    description: ''
+  })
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -18,6 +27,7 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers()
+    fetchUserPermissions()
   }, [])
 
   const fetchUsers = async () => {
@@ -64,6 +74,89 @@ const UserManagement = () => {
     } catch (error) {
       console.error('Failed to create user:', error)
     }
+  }
+
+  const fetchUserPermissions = async () => {
+    try {
+      const response = await fetch('/api/user-permissions', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('cyclecorelims_token')}`
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setUserPermissions(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch user permissions:', error)
+    }
+  }
+
+  const handleCreatePermission = async (e) => {
+    e.preventDefault()
+    
+    try {
+      const response = await fetch('/api/user-permissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('cyclecorelims_token')}`
+        },
+        body: JSON.stringify(permissionFormData)
+      })
+      
+      if (response.ok) {
+        setShowPermissionForm(false)
+        setPermissionFormData({
+          username: '',
+          allowedTabs: [],
+          description: ''
+        })
+        fetchUserPermissions()
+      }
+    } catch (error) {
+      console.error('Failed to create permission:', error)
+    }
+  }
+
+  const handleDeletePermission = async (username) => {
+    if (!confirm(`Are you sure you want to remove permissions for ${username}?`)) {
+      return
+    }
+    
+    try {
+      const response = await fetch(`/api/user-permissions/${username}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('cyclecorelims_token')}`
+        }
+      })
+      
+      if (response.ok) {
+        fetchUserPermissions()
+      }
+    } catch (error) {
+      console.error('Failed to delete permission:', error)
+    }
+  }
+
+  const openPermissionForm = (user) => {
+    setSelectedUser(user)
+    setPermissionFormData({
+      username: user.username,
+      allowedTabs: userPermissions.users[user.username]?.allowedTabs || [],
+      description: userPermissions.users[user.username]?.description || ''
+    })
+    setShowPermissionForm(true)
+  }
+
+  const handleTabToggle = (tabKey) => {
+    setPermissionFormData(prev => ({
+      ...prev,
+      allowedTabs: prev.allowedTabs.includes(tabKey)
+        ? prev.allowedTabs.filter(tab => tab !== tabKey)
+        : [...prev.allowedTabs, tabKey]
+    }))
   }
 
   const getRoleColor = (role) => {
@@ -113,8 +206,10 @@ const UserManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tab Access</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -140,12 +235,41 @@ const UserManagement = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
+                    {userPermissions.users[user.username] ? (
+                      <div className="flex flex-wrap gap-1">
+                        {userPermissions.users[user.username].allowedTabs.map(tab => (
+                          <span key={tab} className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                            {AVAILABLE_TABS[tab] || tab}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-500">Role-based</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                       Active
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => openPermissionForm(user)}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                    >
+                      Manage Access
+                    </button>
+                    {userPermissions.users[user.username] && (
+                      <button
+                        onClick={() => handleDeletePermission(user.username)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Remove Access
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -242,6 +366,100 @@ const UserManagement = () => {
                 >
                   Create User
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Permission Management Modal */}
+      {showPermissionForm && selectedUser && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Manage Tab Access for {selectedUser.firstName && selectedUser.lastName 
+                ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                : selectedUser.username
+              }
+            </h3>
+            <form onSubmit={handleCreatePermission}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                  <input
+                    type="text"
+                    value={permissionFormData.username}
+                    disabled
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Allowed Tabs</label>
+                  <div className="border border-gray-300 rounded-md p-4 max-h-60 overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-3">
+                      {Object.entries(AVAILABLE_TABS).map(([tabKey, tabLabel]) => (
+                        <label key={tabKey} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <input
+                            type="checkbox"
+                            checked={permissionFormData.allowedTabs.includes(tabKey)}
+                            onChange={() => handleTabToggle(tabKey)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{tabLabel}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Select the tabs this user should have access to. If no tabs are selected, the user will use role-based permissions.
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                  <textarea
+                    value={permissionFormData.description}
+                    onChange={(e) => setPermissionFormData({...permissionFormData, description: e.target.value})}
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Describe the user's access level..."
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-between">
+                <div>
+                  {userPermissions.users[selectedUser.username] && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Remove all custom permissions for this user?')) {
+                          handleDeletePermission(selectedUser.username)
+                          setShowPermissionForm(false)
+                        }
+                      }}
+                      className="btn btn-secondary text-red-600 hover:text-red-800"
+                    >
+                      Remove Custom Access
+                    </button>
+                  )}
+                </div>
+                <div className="space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowPermissionForm(false)}
+                    className="btn btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                  >
+                    Save Access
+                  </button>
+                </div>
               </div>
             </form>
           </div>
