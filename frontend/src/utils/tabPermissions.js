@@ -1,6 +1,9 @@
 // Tab permissions configuration
 // This allows specific users to have custom tab access regardless of their role
 
+// Fallback static permissions from JSON file
+import staticUserPermissionsConfig from '../config/userPermissions.json'
+
 export const TAB_PERMISSIONS = {
   // Define which roles can access which tabs
   roleBased: {
@@ -15,12 +18,18 @@ export const TAB_PERMISSIONS = {
     clinicalSample: ['admin', 'lab_technician', 'manager']
   },
 
-  // User-specific overrides - will be loaded dynamically
-  userSpecific: {}
+  // Static user-specific overrides from JSON file
+  userSpecific: Object.fromEntries(
+    Object.entries(staticUserPermissionsConfig.users || {}).map(([key, user]) => [
+      user.username,
+      user.allowedTabs
+    ])
+  )
 }
 
-// Store for dynamic user permissions
+// Store for dynamic user permissions (overrides static ones)
 let dynamicUserPermissions = {}
+let useDynamicPermissions = false
 
 // Function to update user-specific permissions from API
 export const updateUserPermissions = (permissions) => {
@@ -30,20 +39,23 @@ export const updateUserPermissions = (permissions) => {
       user.allowedTabs
     ])
   )
+  useDynamicPermissions = true
+  console.log('Dynamic permissions updated:', dynamicUserPermissions)
 }
 
 // Get current user-specific permissions
 export const getUserSpecificPermissions = () => {
-  return dynamicUserPermissions
+  return useDynamicPermissions ? dynamicUserPermissions : TAB_PERMISSIONS.userSpecific
 }
 
 // Helper function to check if user has access to a specific tab
 export const hasTabAccess = (user, tabKey) => {
   if (!user) return false
   
-  // Check if user has specific permissions configured (dynamic)
-  if (dynamicUserPermissions[user.username]) {
-    return dynamicUserPermissions[user.username].includes(tabKey)
+  // Check if user has specific permissions configured (dynamic or static)
+  const userSpecificPermissions = useDynamicPermissions ? dynamicUserPermissions : TAB_PERMISSIONS.userSpecific
+  if (userSpecificPermissions[user.username]) {
+    return userSpecificPermissions[user.username].includes(tabKey)
   }
   
   // Fall back to role-based permissions
@@ -55,9 +67,10 @@ export const hasTabAccess = (user, tabKey) => {
 export const getAccessibleTabs = (user) => {
   if (!user) return []
   
-  // If user has specific permissions, return only those (dynamic)
-  if (dynamicUserPermissions[user.username]) {
-    return dynamicUserPermissions[user.username]
+  // If user has specific permissions, return only those (dynamic or static)
+  const userSpecificPermissions = useDynamicPermissions ? dynamicUserPermissions : TAB_PERMISSIONS.userSpecific
+  if (userSpecificPermissions[user.username]) {
+    return userSpecificPermissions[user.username]
   }
   
   // Otherwise return all tabs based on role

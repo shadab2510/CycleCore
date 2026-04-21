@@ -40,10 +40,12 @@ function App() {
       const fetchPermissions = async () => {
         try {
           const response = await userPermissionsAPI.getAll()
-          console.log('App: User permissions loaded:', response.data)
+          console.log('App: User permissions loaded from API:', response.data)
           updateUserPermissions(response.data)
         } catch (error) {
-          console.error('App: Failed to fetch user permissions:', error)
+          console.error('App: Failed to fetch user permissions from API, using static fallback:', error)
+          // API failed, static permissions from JSON file will be used automatically
+          // No need to do anything since useDynamicPermissions defaults to false
         }
       }
       
