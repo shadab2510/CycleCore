@@ -173,6 +173,35 @@ const UserManagement = () => {
     }
   }
 
+  const seedPermissions = async () => {
+    if (!confirm('Are you sure you want to seed MongoDB permissions? This will clear existing permissions and add default permissions for all users.')) {
+      return
+    }
+    
+    try {
+      const response = await fetch('/api/user-permissions/seed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('cyclecorelims_token')}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        alert(`Permissions seeded successfully!\n\nTotal users: ${data.total}\n${data.permissions.map(p => `- ${p.username}: ${p.allowedTabs.join(', ')}`).join('\n')}`)
+        fetchUserPermissions() // Refresh permissions
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to seed permissions: ${response.status} - ${errorData.error || 'Unknown error'}`)
+      }
+      
+    } catch (error) {
+      console.error('Failed to seed permissions:', error)
+      alert('Failed to seed permissions. Please check your network connection and try again.')
+    }
+  }
+
   const openPermissionForm = (user) => {
     setSelectedUser(user)
     setPermissionFormData({
@@ -240,6 +269,12 @@ const UserManagement = () => {
             className="btn btn-secondary"
           >
             Test API Connection
+          </button>
+          <button
+            onClick={seedPermissions}
+            className="btn btn-warning"
+          >
+            Seed Permissions
           </button>
           <button
             onClick={() => setShowCreateForm(true)}

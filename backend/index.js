@@ -697,6 +697,79 @@ app.delete('/api/user-permissions/:username', authenticateToken, requireRole(['a
   }
 })
 
+// One-time endpoint to seed MongoDB permissions (admin only)
+app.post('/api/user-permissions/seed', authenticateToken, requireRole(['admin']), async (req, res) => {
+  try {
+    console.log('Seeding MongoDB permissions...')
+    
+    // Clear existing permissions
+    await UserPermission.deleteMany({})
+    console.log('Cleared existing user permissions')
+    
+    // Seed initial permissions
+    const initialPermissions = [
+      {
+        username: 'john_doe',
+        allowedTabs: ['complaints', 'complaintsAnalytics'],
+        description: 'User with access to only Complaints and Complaints Analytics',
+        createdBy: 'system'
+      },
+      {
+        username: 'jane_smith',
+        allowedTabs: ['dashboard', 'complaints', 'complaintsAnalytics'],
+        description: 'User with access to Dashboard, Complaints and Complaints Analytics',
+        createdBy: 'system'
+      },
+      {
+        username: 'labtech',
+        allowedTabs: ['complaintsAnalytics', 'complaints'],
+        description: 'User with access to complaintsAnalytics, complaints',
+        createdBy: 'system'
+      },
+      {
+        username: 'labTech2',
+        allowedTabs: ['complaints', 'complaintsAnalytics'],
+        description: 'User with access to complaints, complaintsAnalytics',
+        createdBy: 'system'
+      },
+      {
+        username: 'shadab',
+        allowedTabs: ['complaints', 'complaintsAnalytics'],
+        description: 'User with access to complaints, complaintsAnalytics',
+        createdBy: 'system'
+      },
+      {
+        username: 'shadab_tech',
+        allowedTabs: ['complaints', 'complaintsAnalytics'],
+        description: 'User with access to complaints, complaintsAnalytics',
+        createdBy: 'system'
+      }
+    ]
+    
+    // Insert permissions
+    await UserPermission.insertMany(initialPermissions)
+    console.log('Seeded initial user permissions')
+    
+    // Display seeded permissions
+    const permissions = await UserPermission.find().sort({ username: 1 })
+    const permissionSummary = permissions.map(p => ({
+      username: p.username,
+      allowedTabs: p.allowedTabs,
+      description: p.description
+    }))
+    
+    res.json({ 
+      message: 'MongoDB permissions seeded successfully',
+      permissions: permissionSummary,
+      total: permissions.length
+    })
+    
+  } catch (error) {
+    console.error('Error seeding permissions:', error)
+    res.status(500).json({ error: 'Failed to seed permissions' })
+  }
+})
+
 function generateSampleId() {
   const timestamp = Date.now().toString(36).toUpperCase()
   const random = Math.random().toString(36).substring(2, 5).toUpperCase()
