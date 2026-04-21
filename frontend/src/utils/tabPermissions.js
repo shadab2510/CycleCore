@@ -30,6 +30,28 @@ export const updateUserPermissions = (permissions) => {
       user.allowedTabs
     ])
   )
+  
+  // Cache permissions in localStorage for persistence
+  try {
+    localStorage.setItem('cyclecorelims_user_permissions', JSON.stringify(dynamicUserPermissions))
+  } catch (error) {
+    console.warn('Failed to cache permissions:', error)
+  }
+}
+
+// Load cached permissions from localStorage on startup
+export const loadCachedPermissions = () => {
+  try {
+    const cached = localStorage.getItem('cyclecorelims_user_permissions')
+    if (cached) {
+      dynamicUserPermissions = JSON.parse(cached)
+      console.log('Loaded cached permissions:', dynamicUserPermissions)
+      return true
+    }
+  } catch (error) {
+    console.warn('Failed to load cached permissions:', error)
+  }
+  return false
 }
 
 // Get current user-specific permissions
