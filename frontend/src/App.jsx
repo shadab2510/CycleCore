@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { setUser } from './store/authSlice'
-import { updateUserPermissions } from './utils/tabPermissions'
+import { updateUserPermissions, loadFallbackPermissions } from './utils/tabPermissions'
 import { userPermissionsAPI } from './services/api'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -44,9 +44,14 @@ function App() {
           updateUserPermissions(response.data)
         } catch (error) {
           console.error('App: Failed to fetch user permissions from MongoDB:', error)
-          console.warn('App: No permissions loaded - users will have role-based access only')
-          // API failed - users will fall back to role-based permissions only
-          // No static fallback since we removed the JSON file
+          console.warn('App: Attempting to load fallback permissions...')
+          
+          // Try to load fallback permissions from session storage
+          if (loadFallbackPermissions()) {
+            console.log('App: Successfully loaded fallback permissions')
+          } else {
+            console.warn('App: No permissions loaded - users will have role-based access only')
+          }
         }
       }
       

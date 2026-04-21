@@ -30,6 +30,28 @@ export const updateUserPermissions = (permissions) => {
       user.allowedTabs
     ])
   )
+  
+  // Store in session storage as fallback when API fails
+  try {
+    sessionStorage.setItem('cyclecorelims_permissions_fallback', JSON.stringify(dynamicUserPermissions))
+  } catch (error) {
+    console.warn('Failed to store fallback permissions:', error)
+  }
+}
+
+// Load fallback permissions from session storage
+export const loadFallbackPermissions = () => {
+  try {
+    const fallback = sessionStorage.getItem('cyclecorelims_permissions_fallback')
+    if (fallback && Object.keys(dynamicUserPermissions).length === 0) {
+      dynamicUserPermissions = JSON.parse(fallback)
+      console.log('Loaded fallback permissions:', dynamicUserPermissions)
+      return true
+    }
+  } catch (error) {
+    console.warn('Failed to load fallback permissions:', error)
+  }
+  return false
 }
 
 // Get current user-specific permissions
