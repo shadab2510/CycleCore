@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { setUser } from './store/authSlice'
-import { updateUserPermissions, loadCachedPermissions } from './utils/tabPermissions'
+import { updateUserPermissions } from './utils/tabPermissions'
 import { userPermissionsAPI } from './services/api'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -32,9 +32,6 @@ function App() {
     if (storedToken && storedUser && !token) {
       dispatch(setUser(JSON.parse(storedUser)))
     }
-    
-    // Load cached permissions on app startup
-    loadCachedPermissions()
   }, [dispatch, token])
 
   // Fetch user permissions when authenticated
