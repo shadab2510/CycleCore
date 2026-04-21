@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { AVAILABLE_TABS, updateUserPermissions } from '../utils/tabPermissions'
+import { AVAILABLE_TABS, updateUserPermissions, clearCachedPermissions } from '../utils/tabPermissions'
 import { testBackendConnection, testProxyConnection } from '../utils/apiTest'
 import { usersAPI, userPermissionsAPI } from '../services/api'
 
@@ -173,10 +173,13 @@ const UserManagement = () => {
     }
   }
 
-  const seedPermissions = async () => {
-    if (!confirm('Are you sure you want to seed MongoDB permissions? This will clear existing permissions and add default permissions for all users.')) {
+  const clearCacheAndReseed = async () => {
+    if (!confirm('Are you sure you want to clear cache and reseed permissions? This will clear cached permissions and add default permissions for all users including new ones.')) {
       return
     }
+    
+    // Clear cached permissions first
+    clearCachedPermissions()
     
     try {
       // Use the same API base URL as other API calls
@@ -276,10 +279,10 @@ const UserManagement = () => {
             Test API Connection
           </button>
           <button
-            onClick={seedPermissions}
+            onClick={clearCacheAndReseed}
             className="btn btn-warning"
           >
-            Seed Permissions
+            Clear Cache & Reseed
           </button>
           <button
             onClick={() => setShowCreateForm(true)}

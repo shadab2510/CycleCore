@@ -54,6 +54,19 @@ export const loadCachedPermissions = () => {
   return false
 }
 
+// Clear cached permissions
+export const clearCachedPermissions = () => {
+  try {
+    localStorage.removeItem('cyclecorelims_user_permissions')
+    dynamicUserPermissions = {}
+    console.log('Cleared cached permissions')
+    return true
+  } catch (error) {
+    console.warn('Failed to clear cached permissions:', error)
+    return false
+  }
+}
+
 // Get current user-specific permissions
 export const getUserSpecificPermissions = () => {
   return dynamicUserPermissions
