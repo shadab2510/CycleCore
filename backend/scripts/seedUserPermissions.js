@@ -44,6 +44,12 @@ async function seedUserPermissions() {
         allowedTabs: ['complaints', 'complaintsAnalytics'],
         description: 'User with access to complaints, complaintsAnalytics',
         createdBy: 'system'
+      },
+      {
+        username: 'shadab_tech',
+        allowedTabs: ['complaints', 'complaintsAnalytics'],
+        description: 'User with access to complaints, complaintsAnalytics',
+        createdBy: 'system'
       }
     ];
 
