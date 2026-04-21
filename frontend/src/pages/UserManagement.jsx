@@ -13,6 +13,7 @@ const UserManagement = () => {
     allowedTabs: [],
     description: ''
   })
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -32,17 +33,46 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
+      setLoading(true)
+      const token = localStorage.getItem('cyclecorelims_token')
+      console.log('Fetching users with token:', token ? 'Token exists' : 'No token')
+      
       const response = await fetch('/api/users', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('cyclecorelims_token')}`
+          'Authorization': `Bearer ${token}`
         }
       })
+      
+      console.log('Users API response status:', response.status)
+      
       if (response.ok) {
-        const data = await response.json()
-        setUsers(data)
+        const contentType = response.headers.get('content-type')
+        console.log('Response content type:', contentType)
+        
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json()
+          console.log('Users data received:', data)
+          setUsers(data)
+        } else {
+          const text = await response.text()
+          console.error('Received non-JSON response:', text.substring(0, 200))
+          alert('Server returned HTML instead of JSON. Check if backend is running and accessible.')
+        }
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to fetch users - Status:', response.status, 'Error:', errorText)
+        // Check if error is HTML (like 404 page)
+        if (errorText.includes('<!DOCTYPE')) {
+          alert(`Backend API not accessible. Got HTML error page instead of API response. Status: ${response.status}`)
+        } else {
+          alert(`Failed to fetch users: ${response.status} - ${errorText}`)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch users:', error)
+      alert(`Failed to fetch users: ${error.message}`)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -78,14 +108,36 @@ const UserManagement = () => {
 
   const fetchUserPermissions = async () => {
     try {
+      const token = localStorage.getItem('cyclecorelims_token')
+      console.log('Fetching user permissions with token:', token ? 'Token exists' : 'No token')
+      
       const response = await fetch('/api/user-permissions', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('cyclecorelims_token')}`
+          'Authorization': `Bearer ${token}`
         }
       })
+      
+      console.log('User permissions API response status:', response.status)
+      
       if (response.ok) {
-        const data = await response.json()
-        setUserPermissions(data)
+        const contentType = response.headers.get('content-type')
+        console.log('User permissions response content type:', contentType)
+        
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json()
+          console.log('User permissions data received:', data)
+          setUserPermissions(data)
+        } else {
+          const text = await response.text()
+          console.error('Received non-JSON response for permissions:', text.substring(0, 200))
+          // Don't show alert for permissions error, just log it
+        }
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to fetch user permissions - Status:', response.status, 'Error:', errorText)
+        if (errorText.includes('<!DOCTYPE')) {
+          console.error('Backend API not accessible for permissions. Got HTML error page.')
+        }
       }
     } catch (error) {
       console.error('Failed to fetch user permissions:', error)
@@ -200,20 +252,36 @@ const UserManagement = () => {
           <h3 className="text-lg font-medium text-gray-900">System Users</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tab Access</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="mt-2 text-gray-500">Loading users...</p>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No users found</p>
+              <button
+                onClick={fetchUsers}
+                className="mt-2 text-blue-600 hover:text-blue-800 underline"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tab Access</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {users.map((user) => (
                 <tr key={user.id || user._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
@@ -275,6 +343,7 @@ const UserManagement = () => {
               ))}
             </tbody>
           </table>
+          )}
         </div>
       </div>
 
