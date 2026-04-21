@@ -63,14 +63,22 @@ export const getUserSpecificPermissions = () => {
 export const hasTabAccess = (user, tabKey) => {
   if (!user) return false
   
+  console.log(`Checking access for user: ${user.username}, tab: ${tabKey}`)
+  console.log('Available permissions:', Object.keys(dynamicUserPermissions))
+  console.log('Has specific permissions:', dynamicUserPermissions[user.username])
+  
   // Check if user has specific permissions configured from MongoDB
   if (dynamicUserPermissions[user.username]) {
-    return dynamicUserPermissions[user.username].includes(tabKey)
+    const hasAccess = dynamicUserPermissions[user.username].includes(tabKey)
+    console.log(`User ${user.username} has specific access to ${tabKey}: ${hasAccess}`)
+    return hasAccess
   }
   
   // Fall back to role-based permissions only if no specific permissions exist
   const allowedRoles = TAB_PERMISSIONS.roleBased[tabKey]
-  return allowedRoles && allowedRoles.includes(user.role)
+  const hasRoleAccess = allowedRoles && allowedRoles.includes(user.role)
+  console.log(`User ${user.username} falling back to role-based access for ${tabKey}: ${hasRoleAccess}`)
+  return hasRoleAccess
 }
 
 // Helper function to get all accessible tabs for a user
