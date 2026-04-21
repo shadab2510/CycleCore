@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { AVAILABLE_TABS } from '../utils/tabPermissions'
+import { testBackendConnection, testProxyConnection } from '../utils/apiTest'
 
 const UserManagement = () => {
   const [users, setUsers] = useState([])
@@ -211,6 +212,21 @@ const UserManagement = () => {
     }))
   }
 
+  const testApiConnections = async () => {
+    console.log('=== API Connection Test ===')
+    
+    // Test direct backend connection
+    const directResult = await testBackendConnection()
+    console.log('Direct Backend Result:', directResult)
+    
+    // Test proxy connection
+    const proxyResult = await testProxyConnection()
+    console.log('Proxy Result:', proxyResult)
+    
+    // Show results to user
+    alert(`API Connection Test Results:\n\nDirect Backend: ${directResult.message}\nProxy: ${proxyResult.message}\n\nCheck console for detailed logs.`)
+  }
+
   const getRoleColor = (role) => {
     const colors = {
       'admin': 'bg-purple-100 text-purple-800',
@@ -238,12 +254,20 @@ const UserManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
           <p className="text-gray-500">Manage system users and roles</p>
         </div>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="btn btn-primary"
-        >
-          Create User
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={testApiConnections}
+            className="btn btn-secondary"
+          >
+            Test API Connection
+          </button>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="btn btn-primary"
+          >
+            Create User
+          </button>
+        </div>
       </div>
 
       {/* Users List */}
