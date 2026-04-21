@@ -179,7 +179,12 @@ const UserManagement = () => {
     }
     
     try {
-      const response = await fetch('/api/user-permissions/seed', {
+      // Use the same API base URL as other API calls
+      const API_BASE_URL = import.meta.env.VITE_API_URL
+        ? `${import.meta.env.VITE_API_URL}/api`
+        : 'http://localhost:3001/api'
+      
+      const response = await fetch(`${API_BASE_URL}/user-permissions/seed`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
