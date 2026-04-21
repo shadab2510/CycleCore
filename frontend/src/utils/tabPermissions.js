@@ -1,9 +1,6 @@
 // Tab permissions configuration
 // This allows specific users to have custom tab access regardless of their role
 
-// Fallback static permissions from JSON file
-import staticUserPermissionsConfig from '../config/userPermissions.json'
-
 export const TAB_PERMISSIONS = {
   // Define which roles can access which tabs
   roleBased: {
@@ -18,22 +15,12 @@ export const TAB_PERMISSIONS = {
     clinicalSample: ['admin', 'lab_technician', 'manager']
   },
 
-  // Static user-specific overrides from JSON file
-  userSpecific: (() => {
-    const permissions = Object.fromEntries(
-      Object.entries(staticUserPermissionsConfig.users || {}).map(([key, user]) => [
-        user.username,
-        user.allowedTabs
-      ])
-    )
-    console.log('Static user permissions loaded:', permissions)
-    return permissions
-  })()
+  // User-specific overrides - loaded from MongoDB via API
+  userSpecific: {}
 }
 
-// Store for dynamic user permissions (overrides static ones)
+// Store for dynamic user permissions from MongoDB
 let dynamicUserPermissions = {}
-let useDynamicPermissions = false
 
 // Function to update user-specific permissions from API
 export const updateUserPermissions = (permissions) => {
@@ -43,13 +30,12 @@ export const updateUserPermissions = (permissions) => {
       user.allowedTabs
     ])
   )
-  useDynamicPermissions = true
-  console.log('Dynamic permissions updated:', dynamicUserPermissions)
+  console.log('MongoDB permissions updated:', dynamicUserPermissions)
 }
 
 // Get current user-specific permissions
 export const getUserSpecificPermissions = () => {
-  return useDynamicPermissions ? dynamicUserPermissions : TAB_PERMISSIONS.userSpecific
+  return dynamicUserPermissions
 }
 
 // Helper function to check if user has access to a specific tab
@@ -58,20 +44,17 @@ export const hasTabAccess = (user, tabKey) => {
   
   console.log(`Checking tab access for user: ${user.username}, tab: ${tabKey}`)
   console.log(`User role: ${user.role}`)
-  console.log(`Using dynamic permissions: ${useDynamicPermissions}`)
+  console.log(`MongoDB permissions:`, dynamicUserPermissions)
+  console.log(`User ${user.username} specific permissions:`, dynamicUserPermissions[user.username])
   
-  // Check if user has specific permissions configured (dynamic or static)
-  const userSpecificPermissions = useDynamicPermissions ? dynamicUserPermissions : TAB_PERMISSIONS.userSpecific
-  console.log(`User specific permissions:`, userSpecificPermissions)
-  console.log(`User ${user.username} specific permissions:`, userSpecificPermissions[user.username])
-  
-  if (userSpecificPermissions[user.username]) {
-    const hasAccess = userSpecificPermissions[user.username].includes(tabKey)
-    console.log(`User ${user.username} has specific access to ${tabKey}: ${hasAccess}`)
+  // Check if user has specific permissions configured from MongoDB
+  if (dynamicUserPermissions[user.username]) {
+    const hasAccess = dynamicUserPermissions[user.username].includes(tabKey)
+    console.log(`User ${user.username} has MongoDB access to ${tabKey}: ${hasAccess}`)
     return hasAccess
   }
   
-  // Fall back to role-based permissions
+  // Fall back to role-based permissions only if no specific permissions exist
   const allowedRoles = TAB_PERMISSIONS.roleBased[tabKey]
   console.log(`Tab ${tabKey} allowed roles:`, allowedRoles)
   const hasRoleAccess = allowedRoles && allowedRoles.includes(user.role)
@@ -84,10 +67,9 @@ export const hasTabAccess = (user, tabKey) => {
 export const getAccessibleTabs = (user) => {
   if (!user) return []
   
-  // If user has specific permissions, return only those (dynamic or static)
-  const userSpecificPermissions = useDynamicPermissions ? dynamicUserPermissions : TAB_PERMISSIONS.userSpecific
-  if (userSpecificPermissions[user.username]) {
-    return userSpecificPermissions[user.username]
+  // If user has specific permissions from MongoDB, return only those
+  if (dynamicUserPermissions[user.username]) {
+    return dynamicUserPermissions[user.username]
   }
   
   // Otherwise return all tabs based on role

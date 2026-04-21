@@ -40,12 +40,13 @@ function App() {
       const fetchPermissions = async () => {
         try {
           const response = await userPermissionsAPI.getAll()
-          console.log('App: User permissions loaded from API:', response.data)
+          console.log('App: User permissions loaded from MongoDB:', response.data)
           updateUserPermissions(response.data)
         } catch (error) {
-          console.error('App: Failed to fetch user permissions from API, using static fallback:', error)
-          // API failed, static permissions from JSON file will be used automatically
-          // No need to do anything since useDynamicPermissions defaults to false
+          console.error('App: Failed to fetch user permissions from MongoDB:', error)
+          console.warn('App: No permissions loaded - users will have role-based access only')
+          // API failed - users will fall back to role-based permissions only
+          // No static fallback since we removed the JSON file
         }
       }
       
