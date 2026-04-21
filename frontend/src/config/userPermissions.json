@@ -34,8 +34,8 @@
       ],
       "description": "User with access to complaints, complaintsAnalytics"
     },
-    "manager": {
-      "username": "manager",
+    "shadab": {
+      "username": "shadab",
       "allowedTabs": [
         "complaints",
         "complaintsAnalytics"

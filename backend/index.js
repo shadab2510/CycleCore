@@ -9,6 +9,9 @@ const jwt = require('jsonwebtoken')
 const multer = require('multer')
 const path = require('path')
 
+// Import models
+const UserPermission = require('./models/UserPermission')
+
 const app = express()
 const PORT = process.env.PORT || 3001
 const JWT_SECRET = process.env.JWT_SECRET || 'cyclecorelims-secret-key-2024'
@@ -608,31 +611,34 @@ app.post('/api/users', authenticateToken, requireRole(['admin']), async (req, re
 // User permission management endpoints
 app.get('/api/user-permissions', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
-    // In a real implementation, this would be stored in database
-    // For now, we'll return the permissions from the frontend config
-    const fs = require('fs').promises
-    const path = require('path')
+    // Fetch all user permissions from MongoDB
+    const userPermissions = await UserPermission.find().sort({ createdAt: -1 })
     
-    try {
-      const configPath = path.join(__dirname, '../frontend/src/config/userPermissions.json')
-      const configData = await fs.readFile(configPath, 'utf8')
-      const config = JSON.parse(configData)
-      res.json(config)
-    } catch (error) {
-      // If file doesn't exist, return empty config
-      res.json({
-        description: "User-specific tab permissions configuration",
-        users: {},
-        instructions: {
-          how_to_use: [
-            "1. Add a new user entry in the 'users' object",
-            "2. Set 'allowedTabs' array with the tab keys they should access", 
-            "3. Available tab keys: dashboard, samples, tests, results, complaints, complaintsAnalytics, userManagement, clinicalTrials, clinicalSample"
-          ]
-        }
-      })
+    // Convert to the expected format
+    const users = {}
+    userPermissions.forEach(permission => {
+      users[permission.username] = {
+        username: permission.username,
+        allowedTabs: permission.allowedTabs,
+        description: permission.description
+      }
+    })
+    
+    const config = {
+      description: "User-specific tab permissions configuration stored in MongoDB",
+      users,
+      instructions: {
+        how_to_use: [
+          "1. Add a new user entry in the 'users' object",
+          "2. Set 'allowedTabs' array with the tab keys they should access", 
+          "3. Available tab keys: dashboard, samples, tests, results, complaints, complaintsAnalytics, userManagement, clinicalTrials, clinicalSample"
+        ]
+      }
     }
+    
+    res.json(config)
   } catch (error) {
+    console.error('Failed to fetch user permissions:', error)
     res.status(500).json({ error: 'Failed to fetch user permissions' })
   }
 })
@@ -645,43 +651,29 @@ app.post('/api/user-permissions', authenticateToken, requireRole(['admin']), asy
       return res.status(400).json({ error: 'Username and allowedTabs array are required' })
     }
     
-    const fs = require('fs').promises
-    const path = require('path')
+    // Validate tab keys
+    const validTabs = ['dashboard', 'samples', 'tests', 'results', 'complaints', 'complaintsAnalytics', 'userManagement', 'clinicalTrials', 'clinicalSample']
+    const invalidTabs = allowedTabs.filter(tab => !validTabs.includes(tab))
+    if (invalidTabs.length > 0) {
+      return res.status(400).json({ error: `Invalid tab keys: ${invalidTabs.join(', ')}` })
+    }
     
-    try {
-      const configPath = path.join(__dirname, '../frontend/src/config/userPermissions.json')
-      let config
-      
-      try {
-        const configData = await fs.readFile(configPath, 'utf8')
-        config = JSON.parse(configData)
-      } catch (error) {
-        config = {
-          description: "User-specific tab permissions configuration",
-          users: {},
-          instructions: {
-            how_to_use: [
-              "1. Add a new user entry in the 'users' object",
-              "2. Set 'allowedTabs' array with the tab keys they should access", 
-              "3. Available tab keys: dashboard, samples, tests, results, complaints, complaintsAnalytics, userManagement, clinicalTrials, clinicalSample"
-            ]
-          }
-        }
-      }
-      
-      config.users[username] = {
+    // Create or update user permission in MongoDB
+    const userPermission = await UserPermission.findOneAndUpdate(
+      { username },
+      {
         username,
         allowedTabs,
-        description: description || `User with access to ${allowedTabs.join(', ')}`
-      }
-      
-      await fs.writeFile(configPath, JSON.stringify(config, null, 2))
-      res.json({ message: 'User permissions updated successfully', config })
-      
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to save permissions file' })
-    }
+        description: description || `User with access to ${allowedTabs.join(', ')}`,
+        createdBy: req.user.username
+      },
+      { upsert: true, new: true }
+    )
+    
+    res.json({ message: 'User permissions updated successfully', userPermission })
+    
   } catch (error) {
+    console.error('Failed to update user permissions:', error)
     res.status(500).json({ error: 'Failed to update user permissions' })
   }
 })
@@ -690,34 +682,18 @@ app.delete('/api/user-permissions/:username', authenticateToken, requireRole(['a
   try {
     const { username } = req.params
     
-    const fs = require('fs').promises
-    const path = require('path')
+    // Find and delete user permission from MongoDB
+    const deletedPermission = await UserPermission.findOneAndDelete({ username })
     
-    try {
-      const configPath = path.join(__dirname, '../frontend/src/config/userPermissions.json')
-      let config
-      
-      try {
-        const configData = await fs.readFile(configPath, 'utf8')
-        config = JSON.parse(configData)
-      } catch (error) {
-        return res.status(404).json({ error: 'Permissions configuration not found' })
-      }
-      
-      if (!config.users[username]) {
-        return res.status(404).json({ error: 'User permissions not found' })
-      }
-      
-      delete config.users[username]
-      
-      await fs.writeFile(configPath, JSON.stringify(config, null, 2))
-      res.json({ message: 'User permissions removed successfully' })
-      
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to update permissions file' })
+    if (!deletedPermission) {
+      return res.status(404).json({ error: 'User permissions not found' })
     }
+    
+    res.json({ message: 'User permissions removed successfully' })
+    
   } catch (error) {
-    res.status(500).json({ error: 'Failed to remove user permissions' })
+    console.error('Failed to delete user permissions:', error)
+    res.status(500).json({ error: 'Failed to delete user permissions' })
   }
 })
 
