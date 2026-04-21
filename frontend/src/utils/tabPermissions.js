@@ -30,7 +30,6 @@ export const updateUserPermissions = (permissions) => {
       user.allowedTabs
     ])
   )
-  console.log('MongoDB permissions updated:', dynamicUserPermissions)
 }
 
 // Get current user-specific permissions
@@ -42,25 +41,14 @@ export const getUserSpecificPermissions = () => {
 export const hasTabAccess = (user, tabKey) => {
   if (!user) return false
   
-  console.log(`Checking tab access for user: ${user.username}, tab: ${tabKey}`)
-  console.log(`User role: ${user.role}`)
-  console.log(`MongoDB permissions:`, dynamicUserPermissions)
-  console.log(`User ${user.username} specific permissions:`, dynamicUserPermissions[user.username])
-  
   // Check if user has specific permissions configured from MongoDB
   if (dynamicUserPermissions[user.username]) {
-    const hasAccess = dynamicUserPermissions[user.username].includes(tabKey)
-    console.log(`User ${user.username} has MongoDB access to ${tabKey}: ${hasAccess}`)
-    return hasAccess
+    return dynamicUserPermissions[user.username].includes(tabKey)
   }
   
   // Fall back to role-based permissions only if no specific permissions exist
   const allowedRoles = TAB_PERMISSIONS.roleBased[tabKey]
-  console.log(`Tab ${tabKey} allowed roles:`, allowedRoles)
-  const hasRoleAccess = allowedRoles && allowedRoles.includes(user.role)
-  console.log(`User ${user.username} has role-based access to ${tabKey}: ${hasRoleAccess}`)
-  
-  return hasRoleAccess
+  return allowedRoles && allowedRoles.includes(user.role)
 }
 
 // Helper function to get all accessible tabs for a user
