@@ -95,7 +95,10 @@ const Layout = ({ children }) => {
         {/* Navigation */}
         <nav className={`${sidebarCollapsed ? 'px-2' : 'px-4'} mt-4 pb-4 overflow-y-auto`}>
           {Object.entries(TAB_CONFIG).map(([tabKey, tab]) => {
-            if (!hasTabAccess(user, tabKey)) return null
+            const hasAccess = hasTabAccess(user, tabKey)
+            console.log(`Layout: Tab ${tabKey} (${tab.label}) access for ${user?.username}: ${hasAccess}`)
+            
+            if (!hasAccess) return null
             
             return (
               <Link 

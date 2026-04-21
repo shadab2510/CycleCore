@@ -19,12 +19,16 @@ export const TAB_PERMISSIONS = {
   },
 
   // Static user-specific overrides from JSON file
-  userSpecific: Object.fromEntries(
-    Object.entries(staticUserPermissionsConfig.users || {}).map(([key, user]) => [
-      user.username,
-      user.allowedTabs
-    ])
-  )
+  userSpecific: (() => {
+    const permissions = Object.fromEntries(
+      Object.entries(staticUserPermissionsConfig.users || {}).map(([key, user]) => [
+        user.username,
+        user.allowedTabs
+      ])
+    )
+    console.log('Static user permissions loaded:', permissions)
+    return permissions
+  })()
 }
 
 // Store for dynamic user permissions (overrides static ones)
@@ -52,15 +56,28 @@ export const getUserSpecificPermissions = () => {
 export const hasTabAccess = (user, tabKey) => {
   if (!user) return false
   
+  console.log(`Checking tab access for user: ${user.username}, tab: ${tabKey}`)
+  console.log(`User role: ${user.role}`)
+  console.log(`Using dynamic permissions: ${useDynamicPermissions}`)
+  
   // Check if user has specific permissions configured (dynamic or static)
   const userSpecificPermissions = useDynamicPermissions ? dynamicUserPermissions : TAB_PERMISSIONS.userSpecific
+  console.log(`User specific permissions:`, userSpecificPermissions)
+  console.log(`User ${user.username} specific permissions:`, userSpecificPermissions[user.username])
+  
   if (userSpecificPermissions[user.username]) {
-    return userSpecificPermissions[user.username].includes(tabKey)
+    const hasAccess = userSpecificPermissions[user.username].includes(tabKey)
+    console.log(`User ${user.username} has specific access to ${tabKey}: ${hasAccess}`)
+    return hasAccess
   }
   
   // Fall back to role-based permissions
   const allowedRoles = TAB_PERMISSIONS.roleBased[tabKey]
-  return allowedRoles && allowedRoles.includes(user.role)
+  console.log(`Tab ${tabKey} allowed roles:`, allowedRoles)
+  const hasRoleAccess = allowedRoles && allowedRoles.includes(user.role)
+  console.log(`User ${user.username} has role-based access to ${tabKey}: ${hasRoleAccess}`)
+  
+  return hasRoleAccess
 }
 
 // Helper function to get all accessible tabs for a user
