@@ -1,8 +1,6 @@
 // Tab permissions configuration
 // This allows specific users to have custom tab access regardless of their role
 
-import userPermissionsConfig from '../config/userPermissions.json'
-
 export const TAB_PERMISSIONS = {
   // Define which roles can access which tabs
   roleBased: {
@@ -17,22 +15,35 @@ export const TAB_PERMISSIONS = {
     clinicalSample: ['admin', 'lab_technician', 'manager']
   },
 
-  // User-specific overrides loaded from JSON config
-  userSpecific: Object.fromEntries(
-    Object.entries(userPermissionsConfig.users).map(([key, user]) => [
+  // User-specific overrides - will be loaded dynamically
+  userSpecific: {}
+}
+
+// Store for dynamic user permissions
+let dynamicUserPermissions = {}
+
+// Function to update user-specific permissions from API
+export const updateUserPermissions = (permissions) => {
+  dynamicUserPermissions = Object.fromEntries(
+    Object.entries(permissions.users || {}).map(([key, user]) => [
       user.username,
       user.allowedTabs
     ])
   )
 }
 
+// Get current user-specific permissions
+export const getUserSpecificPermissions = () => {
+  return dynamicUserPermissions
+}
+
 // Helper function to check if user has access to a specific tab
 export const hasTabAccess = (user, tabKey) => {
   if (!user) return false
   
-  // Check if user has specific permissions configured
-  if (TAB_PERMISSIONS.userSpecific[user.username]) {
-    return TAB_PERMISSIONS.userSpecific[user.username].includes(tabKey)
+  // Check if user has specific permissions configured (dynamic)
+  if (dynamicUserPermissions[user.username]) {
+    return dynamicUserPermissions[user.username].includes(tabKey)
   }
   
   // Fall back to role-based permissions
@@ -44,9 +55,9 @@ export const hasTabAccess = (user, tabKey) => {
 export const getAccessibleTabs = (user) => {
   if (!user) return []
   
-  // If user has specific permissions, return only those
-  if (TAB_PERMISSIONS.userSpecific[user.username]) {
-    return TAB_PERMISSIONS.userSpecific[user.username]
+  // If user has specific permissions, return only those (dynamic)
+  if (dynamicUserPermissions[user.username]) {
+    return dynamicUserPermissions[user.username]
   }
   
   // Otherwise return all tabs based on role

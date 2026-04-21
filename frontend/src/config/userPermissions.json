@@ -25,6 +25,22 @@
         "complaints"
       ],
       "description": "User with access to complaintsAnalytics, complaints"
+    },
+    "labTech2": {
+      "username": "labTech2",
+      "allowedTabs": [
+        "complaints",
+        "complaintsAnalytics"
+      ],
+      "description": "User with access to complaints, complaintsAnalytics"
+    },
+    "manager": {
+      "username": "manager",
+      "allowedTabs": [
+        "complaints",
+        "complaintsAnalytics"
+      ],
+      "description": "User with access to complaints, complaintsAnalytics"
     }
   },
   "instructions": {

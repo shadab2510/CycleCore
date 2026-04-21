@@ -2,6 +2,8 @@ import React, { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { setUser } from './store/authSlice'
+import { updateUserPermissions } from './utils/tabPermissions'
+import { userPermissionsAPI } from './services/api'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
@@ -31,6 +33,23 @@ function App() {
       dispatch(setUser(JSON.parse(storedUser)))
     }
   }, [dispatch, token])
+
+  // Fetch user permissions when authenticated
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      const fetchPermissions = async () => {
+        try {
+          const response = await userPermissionsAPI.getAll()
+          console.log('App: User permissions loaded:', response.data)
+          updateUserPermissions(response.data)
+        } catch (error) {
+          console.error('App: Failed to fetch user permissions:', error)
+        }
+      }
+      
+      fetchPermissions()
+    }
+  }, [isAuthenticated, token])
 
   if (!isAuthenticated) {
     return (

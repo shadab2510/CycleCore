@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { AVAILABLE_TABS } from '../utils/tabPermissions'
+import { AVAILABLE_TABS, updateUserPermissions } from '../utils/tabPermissions'
 import { testBackendConnection, testProxyConnection } from '../utils/apiTest'
 import { usersAPI, userPermissionsAPI } from '../services/api'
 
@@ -106,6 +106,9 @@ const UserManagement = () => {
       console.log('User permissions data received:', response.data)
       
       setUserPermissions(response.data)
+      
+      // Update the global tab permissions system with the fetched data
+      updateUserPermissions(response.data)
       
     } catch (error) {
       console.error('Failed to fetch user permissions:', error)
