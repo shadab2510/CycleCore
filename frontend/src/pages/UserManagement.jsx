@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { AVAILABLE_TABS } from '../utils/tabPermissions'
 import { testBackendConnection, testProxyConnection } from '../utils/apiTest'
-import { getApiBaseUrl, shouldUseProxy } from '../config/apiConfig'
+import { usersAPI, userPermissionsAPI } from '../services/api'
 
 const UserManagement = () => {
   const [users, setUsers] = useState([])
@@ -36,48 +36,32 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem('cyclecorelims_token')
-      console.log('Fetching users with token:', token ? 'Token exists' : 'No token')
+      console.log('Fetching users using API service...')
       
-      // Use environment-aware API URL
-      const apiUrl = shouldUseProxy() ? '/api/users' : `${getApiBaseUrl()}/api/users`
-      console.log('Using API URL:', apiUrl)
-      
-      const response = await fetch(apiUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
+      const response = await usersAPI.getAll()
       console.log('Users API response status:', response.status)
+      console.log('Users data received:', response.data)
       
-      if (response.ok) {
-        const contentType = response.headers.get('content-type')
-        console.log('Response content type:', contentType)
-        
-        if (contentType && contentType.includes('application/json')) {
-          const data = await response.json()
-          console.log('Users data received:', data)
-          setUsers(data)
-        } else {
-          const text = await response.text()
-          console.error('Received non-JSON response:', text.substring(0, 200))
-          alert('Server returned HTML instead of JSON. Check if backend is running and accessible.')
-        }
-      } else {
-        const errorText = await response.text()
-        console.error('Failed to fetch users - Status:', response.status, 'Error:', errorText)
-        // Check if error is HTML (like 404 page)
-        if (errorText.includes('<!DOCTYPE')) {
-          alert(`Backend API not accessible. Got HTML error page instead of API response. Status: ${response.status}`)
-        } else {
-          alert(`Failed to fetch users: ${response.status} - ${errorText}`)
-        }
-      }
+      setUsers(response.data)
+      
     } catch (error) {
       console.error('Failed to fetch users:', error)
-      alert(`Failed to fetch users: ${error.message}`)
+      
+      // Better error handling for different types of errors
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response:', error.response.status, error.response.data)
+        alert(`Failed to fetch users: ${error.response.status} - ${error.response.data?.error || 'Unknown error'}`)
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('Error request:', error.request)
+        alert('Failed to connect to server. Please check your network connection.')
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error message:', error.message)
+        alert(`Failed to fetch users: ${error.message}`)
+      }
     } finally {
       setLoading(false)
     }
@@ -87,72 +71,53 @@ const UserManagement = () => {
     e.preventDefault()
     
     try {
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('cyclecorelims_token')}`
-        },
-        body: JSON.stringify(formData)
-      })
+      const response = await usersAPI.create(formData)
       
-      if (response.ok) {
-        setShowCreateForm(false)
-        setFormData({
-          username: '',
-          email: '',
-          password: '',
-          role: 'lab_technician',
-          firstName: '',
-          lastName: ''
-        })
-        fetchUsers()
-      }
+      setShowCreateForm(false)
+      setFormData({
+        username: '',
+        email: '',
+        password: '',
+        role: 'lab_technician',
+        firstName: '',
+        lastName: ''
+      })
+      fetchUsers()
+      
     } catch (error) {
       console.error('Failed to create user:', error)
+      
+      if (error.response) {
+        alert(`Failed to create user: ${error.response.status} - ${error.response.data?.error || 'Unknown error'}`)
+      } else if (error.request) {
+        alert('Failed to connect to server. Please check your network connection.')
+      } else {
+        alert(`Failed to create user: ${error.message}`)
+      }
     }
   }
 
   const fetchUserPermissions = async () => {
     try {
-      const token = localStorage.getItem('cyclecorelims_token')
-      console.log('Fetching user permissions with token:', token ? 'Token exists' : 'No token')
+      console.log('Fetching user permissions using API service...')
       
-      // Use environment-aware API URL
-      const apiUrl = shouldUseProxy() ? '/api/user-permissions' : `${getApiBaseUrl()}/api/user-permissions`
-      console.log('Using permissions API URL:', apiUrl)
-      
-      const response = await fetch(apiUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
+      const response = await userPermissionsAPI.getAll()
       console.log('User permissions API response status:', response.status)
+      console.log('User permissions data received:', response.data)
       
-      if (response.ok) {
-        const contentType = response.headers.get('content-type')
-        console.log('User permissions response content type:', contentType)
-        
-        if (contentType && contentType.includes('application/json')) {
-          const data = await response.json()
-          console.log('User permissions data received:', data)
-          setUserPermissions(data)
-        } else {
-          const text = await response.text()
-          console.error('Received non-JSON response for permissions:', text.substring(0, 200))
-          // Don't show alert for permissions error, just log it
-        }
-      } else {
-        const errorText = await response.text()
-        console.error('Failed to fetch user permissions - Status:', response.status, 'Error:', errorText)
-        if (errorText.includes('<!DOCTYPE')) {
-          console.error('Backend API not accessible for permissions. Got HTML error page.')
-        }
-      }
+      setUserPermissions(response.data)
+      
     } catch (error) {
       console.error('Failed to fetch user permissions:', error)
+      
+      // Don't show alerts for permissions errors, just log them
+      if (error.response) {
+        console.error('Permissions error response:', error.response.status, error.response.data)
+      } else if (error.request) {
+        console.error('Permissions error request:', error.request)
+      } else {
+        console.error('Permissions error message:', error.message)
+      }
     }
   }
 
@@ -160,26 +125,26 @@ const UserManagement = () => {
     e.preventDefault()
     
     try {
-      const response = await fetch('/api/user-permissions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('cyclecorelims_token')}`
-        },
-        body: JSON.stringify(permissionFormData)
-      })
+      const response = await userPermissionsAPI.create(permissionFormData)
       
-      if (response.ok) {
-        setShowPermissionForm(false)
-        setPermissionFormData({
-          username: '',
-          allowedTabs: [],
-          description: ''
-        })
-        fetchUserPermissions()
-      }
+      setShowPermissionForm(false)
+      setPermissionFormData({
+        username: '',
+        allowedTabs: [],
+        description: ''
+      })
+      fetchUserPermissions()
+      
     } catch (error) {
       console.error('Failed to create permission:', error)
+      
+      if (error.response) {
+        alert(`Failed to create permission: ${error.response.status} - ${error.response.data?.error || 'Unknown error'}`)
+      } else if (error.request) {
+        alert('Failed to connect to server. Please check your network connection.')
+      } else {
+        alert(`Failed to create permission: ${error.message}`)
+      }
     }
   }
 
@@ -189,18 +154,19 @@ const UserManagement = () => {
     }
     
     try {
-      const response = await fetch(`/api/user-permissions/${username}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('cyclecorelims_token')}`
-        }
-      })
+      const response = await userPermissionsAPI.delete(username)
+      fetchUserPermissions()
       
-      if (response.ok) {
-        fetchUserPermissions()
-      }
     } catch (error) {
       console.error('Failed to delete permission:', error)
+      
+      if (error.response) {
+        alert(`Failed to delete permission: ${error.response.status} - ${error.response.data?.error || 'Unknown error'}`)
+      } else if (error.request) {
+        alert('Failed to connect to server. Please check your network connection.')
+      } else {
+        alert(`Failed to delete permission: ${error.message}`)
+      }
     }
   }
 

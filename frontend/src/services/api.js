@@ -52,6 +52,12 @@ export const usersAPI = {
   create: (userData) => api.post('/users', userData),
 }
 
+export const userPermissionsAPI = {
+  getAll: () => api.get('/user-permissions'),
+  create: (permissionData) => api.post('/user-permissions', permissionData),
+  delete: (username) => api.delete(`/user-permissions/${username}`),
+}
+
 export const samplesAPI = {
   getAll: () => api.get('/samples'),
   getById: (id) => api.get(`/samples/${id}`),
