@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { AVAILABLE_TABS } from '../utils/tabPermissions'
 import { testBackendConnection, testProxyConnection } from '../utils/apiTest'
+import { getApiBaseUrl, shouldUseProxy } from '../config/apiConfig'
 
 const UserManagement = () => {
   const [users, setUsers] = useState([])
@@ -38,9 +39,14 @@ const UserManagement = () => {
       const token = localStorage.getItem('cyclecorelims_token')
       console.log('Fetching users with token:', token ? 'Token exists' : 'No token')
       
-      const response = await fetch('/api/users', {
+      // Use environment-aware API URL
+      const apiUrl = shouldUseProxy() ? '/api/users' : `${getApiBaseUrl()}/api/users`
+      console.log('Using API URL:', apiUrl)
+      
+      const response = await fetch(apiUrl, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       })
       
@@ -112,9 +118,14 @@ const UserManagement = () => {
       const token = localStorage.getItem('cyclecorelims_token')
       console.log('Fetching user permissions with token:', token ? 'Token exists' : 'No token')
       
-      const response = await fetch('/api/user-permissions', {
+      // Use environment-aware API URL
+      const apiUrl = shouldUseProxy() ? '/api/user-permissions' : `${getApiBaseUrl()}/api/user-permissions`
+      console.log('Using permissions API URL:', apiUrl)
+      
+      const response = await fetch(apiUrl, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       })
       

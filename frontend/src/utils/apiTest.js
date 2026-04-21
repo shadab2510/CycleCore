@@ -3,32 +3,43 @@ export const testBackendConnection = async () => {
   console.log('Testing backend connection...')
   
   try {
-    // Test direct connection to backend
-    const directResponse = await fetch('http://localhost:3001/api/users', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
+    // Get API base URL based on environment
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    const apiBaseUrl = isDevelopment ? 'http://localhost:3001' : window.location.origin
     
-    console.log('Direct backend test - Status:', directResponse.status)
-    console.log('Direct backend test - Content-Type:', directResponse.headers.get('content-type'))
+    console.log('Using API base URL:', apiBaseUrl)
     
-    if (directResponse.ok) {
-      const contentType = directResponse.headers.get('content-type')
-      if (contentType && contentType.includes('application/json')) {
-        const data = await directResponse.json()
-        console.log('Direct backend test - SUCCESS: Got JSON data')
-        return { success: true, message: 'Backend is accessible', data }
+    // Test direct connection to backend (only in development)
+    if (isDevelopment) {
+      const directResponse = await fetch(`${apiBaseUrl}/api/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      console.log('Direct backend test - Status:', directResponse.status)
+      console.log('Direct backend test - Content-Type:', directResponse.headers.get('content-type'))
+      
+      if (directResponse.ok) {
+        const contentType = directResponse.headers.get('content-type')
+        if (contentType && contentType.includes('application/json')) {
+          const data = await directResponse.json()
+          console.log('Direct backend test - SUCCESS: Got JSON data')
+          return { success: true, message: 'Backend is accessible', data }
+        } else {
+          const text = await directResponse.text()
+          console.log('Direct backend test - Got HTML instead of JSON:', text.substring(0, 200))
+          return { success: false, message: 'Backend returned HTML instead of JSON' }
+        }
       } else {
-        const text = await directResponse.text()
-        console.log('Direct backend test - Got HTML instead of JSON:', text.substring(0, 200))
-        return { success: false, message: 'Backend returned HTML instead of JSON' }
+        const errorText = await directResponse.text()
+        console.log('Direct backend test - ERROR:', directResponse.status, errorText)
+        return { success: false, message: `Backend returned error: ${directResponse.status}` }
       }
     } else {
-      const errorText = await directResponse.text()
-      console.log('Direct backend test - ERROR:', directResponse.status, errorText)
-      return { success: false, message: `Backend returned error: ${directResponse.status}` }
+      // In production, skip direct test and return message
+      return { success: false, message: 'Direct backend test skipped in production' }
     }
   } catch (error) {
     console.log('Direct backend test - CONNECTION ERROR:', error.message)
